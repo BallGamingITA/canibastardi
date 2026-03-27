@@ -128,7 +128,7 @@ Main endpoint:
 | Parameter | Description | Supported Values | Default |
 |-----------|-------------|------------------|---------|
 | `type` | Image type (Path) | `poster`, `backdrop`, `logo` | - |
-| `id` | Media ID (Path) | IMDb (tt...), TMDB (tmdb:...), Kitsu (kitsu:...) | - |
+| `id` | Media ID (Path) | IMDb (tt...), TMDB (tmdb:..., tmdb:movie:..., tmdb:tv:..., tmdb:series:...), Kitsu (kitsu:...) | - |
 | `lang` | Image language | Any TMDB ISO 639-1 code (e.g. `it`, `en`, `es`, `fr`, `de`, `ru`, `ja`) | `en` |
 | `streamBadges` | Quality badges via Torrentio (global fallback) | `auto`, `on`, `off` | `auto` |
 | `posterStreamBadges` | Poster quality badges | `auto`, `on`, `off` | `auto` |
@@ -158,7 +158,7 @@ All rendered ratings are normalized to a `0-10` display scale for `poster`, `bac
 ERDB supports multiple formats to identify media:
 
 - **IMDb**: `tt0133093` (standard `tt` + numbers)
-- **TMDB**: `tmdb:603` (prefix `tmdb:` followed by the ID)
+- **TMDB**: `tmdb:603`, `tmdb:movie:603`, `tmdb:tv:1399`, `tmdb:series:1399` (`series` is treated as `tv`)
 - **Kitsu**: `kitsu:1` (prefix `kitsu:` followed by the ID)
 - **Anime Mappings**: `provider:id` (e.g. `anilist:123`, `myanimelist:456`)
 

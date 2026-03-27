@@ -1092,8 +1092,8 @@ export function HomePageView({ refs, state, derived, actions }: HomePageViewProp
                       </tr>
                       <tr>
                         <td className="px-5 py-2 font-bold text-slate-300 text-xs">TMDB</td>
-                        <td className="px-5 py-2 text-slate-400 text-xs">tmdb:id or tmdb:movie:id or tmdb:tv:id</td>
-                        <td className="px-5 py-2 font-mono text-orange-200/50 text-xs">tmdb:movie:603, tmdb:tv:1399</td>
+                        <td className="px-5 py-2 text-slate-400 text-xs">tmdb:id or tmdb:movie:id or tmdb:tv:id or tmdb:series:id</td>
+                        <td className="px-5 py-2 font-mono text-orange-200/50 text-xs">tmdb:movie:603, tmdb:tv:1399, tmdb:series:1399</td>
                       </tr>
                       <tr>
                         <td className="px-5 py-2 font-bold text-slate-300 text-xs">Kitsu</td>
