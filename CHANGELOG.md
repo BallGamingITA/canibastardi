@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.1.14](https://github.com/realbestia1/erdb/compare/v0.1.13...v0.1.14) - 2026-03-31
+
+- Prepare automated package-based releases for v0.1.14 ([5d04734](https://github.com/realbestia1/erdb/commit/5d047343fd62de396b308a90faeb177bd5a59ad7))
+
 ## [0.1.13](https://github.com/realbestia1/erdb/releases/tag/v0.1.13) - 2026-03-31
 
 - Fix preview image caching so ratings refresh correctly when MDBList or SIMKL keys are added after TMDB ([bbea5f5](https://github.com/realbestia1/erdb/commit/bbea5f5205862b1974909c44eb12663b62dc4a13))
