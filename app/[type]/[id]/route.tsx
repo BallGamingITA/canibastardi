@@ -125,7 +125,7 @@ const parseNonNegativeInt = (value?: string | null, max = Number.MAX_SAFE_INTEGE
   if (!Number.isFinite(parsed) || parsed < 0) return null;
   return Math.min(max, Math.floor(parsed));
 };
-const FINAL_IMAGE_RENDERER_CACHE_VERSION = 'poster-backdrop-logo-thumbnail-v45';
+const FINAL_IMAGE_RENDERER_CACHE_VERSION = 'poster-backdrop-logo-thumbnail-v46';
 const TMDB_CACHE_TTL_MS = parseCacheTtlMs(
   process.env.ERDB_TMDB_CACHE_TTL_MS,
   3 * 24 * 60 * 60 * 1000,
@@ -3232,23 +3232,41 @@ const renderWithSharp = async (
   return await measurePhase(phases, 'render', async () => {
     const imageWidth = input.imageWidth ?? input.outputWidth;
     const imageHeight = input.imageHeight ?? input.outputHeight;
-    const imageLeft = Math.max(0, Math.floor((input.outputWidth - imageWidth) / 2));
     const sourcePayload = await getSourceImagePayload(input.imgUrl);
     const sourceBuffer = Buffer.from(sourcePayload.body);
     const overlays: Array<{ input: Buffer; top: number; left: number }> = [];
-
-    const preparedImage = input.imageType === 'logo'
-      ? sharp(sourceBuffer).trim({ background: { r: 0, g: 0, b: 0, alpha: 0 } })
-      : sharp(sourceBuffer);
-    const resizedImageBuffer: Buffer = await preparedImage
-      .resize(imageWidth, imageHeight, {
-        fit: input.imageType === 'logo' ? 'contain' : 'cover',
-        position: 'center',
-        background: { r: 0, g: 0, b: 0, alpha: 0 },
-      })
-      .png({ compressionLevel: 1 })
-      .toBuffer();
-    overlays.push({ input: resizedImageBuffer, top: 0, left: imageLeft });
+    const transparentBackground = { r: 0, g: 0, b: 0, alpha: 0 };
+    let imageLeft = Math.max(0, Math.floor((input.outputWidth - imageWidth) / 2));
+    let imageTop = 0;
+    let renderedImageHeight = imageHeight;
+    const resizedImageBuffer: Buffer =
+      input.imageType === 'logo'
+        ? await (async () => {
+            const trimmedLogo = await sharp(sourceBuffer)
+              .trim({ background: transparentBackground })
+              .png({ compressionLevel: 1 })
+              .toBuffer({ resolveWithObject: true });
+            const trimmedLogoWidth = Math.max(1, trimmedLogo.info.width || imageWidth);
+            const trimmedLogoHeight = Math.max(1, trimmedLogo.info.height || imageHeight);
+            const logoScale = Math.min(imageWidth / trimmedLogoWidth, imageHeight / trimmedLogoHeight);
+            const renderedImageWidth = Math.max(1, Math.round(trimmedLogoWidth * logoScale));
+            renderedImageHeight = Math.max(1, Math.round(trimmedLogoHeight * logoScale));
+            imageLeft = Math.max(0, Math.floor((input.outputWidth - renderedImageWidth) / 2));
+            imageTop = Math.max(0, Math.floor((input.outputHeight - renderedImageHeight) / 2));
+            return sharp(trimmedLogo.data)
+              .resize(renderedImageWidth, renderedImageHeight)
+              .png({ compressionLevel: 1 })
+              .toBuffer();
+          })()
+        : await sharp(sourceBuffer)
+            .resize(imageWidth, imageHeight, {
+              fit: 'cover',
+              position: 'center',
+              background: transparentBackground,
+            })
+            .png({ compressionLevel: 1 })
+            .toBuffer();
+    overlays.push({ input: resizedImageBuffer, top: imageTop, left: imageLeft });
 
     const iconByProvider = new Map<BadgeKey, string | null>();
     if (input.badges.length > 0) {
@@ -4079,11 +4097,7 @@ const renderWithSharp = async (
     if (input.imageType === 'logo') {
       if (input.badges.length > 0 && input.logoBadgeBandHeight > 0 && input.logoBadgesPerRow > 0) {
         const rows = chunkBy(input.badges, input.logoBadgesPerRow);
-        const rowsTotalHeight =
-          rows.length * badgeHeight + Math.max(0, rows.length - 1) * input.badgeGap;
-        let rowY =
-          input.outputHeight +
-          Math.max(0, Math.floor((input.logoBadgeBandHeight - rowsTotalHeight) / 2));
+        let rowY = imageTop + renderedImageHeight;
         for (const row of rows) {
           composeBadgeRow(row, rowY, {
             maxRowWidth: input.logoBadgeMaxWidth,
@@ -4577,7 +4591,7 @@ const renderWithSharp = async (
         ? { r: 0, g: 0, b: 0, alpha: 0 }
         : { r: 17, g: 17, b: 17, alpha: 1 };
 
-    const pipeline = sharp({
+    let pipeline = sharp({
       create: {
         width: input.outputWidth,
         height: input.finalOutputHeight,
@@ -4585,6 +4599,9 @@ const renderWithSharp = async (
         background,
       },
     }).composite(overlays);
+    if (input.imageType === 'logo') {
+      pipeline = pipeline.trim({ background: transparentBackground });
+    }
 
     let finalBuffer: Buffer;
     let outputContentType = outputFormatToContentType(input.outputFormat);
@@ -6666,7 +6683,7 @@ export async function GET(
       } else if (useLogoBadgeLayout) {
         badgeIconSize = 92;
         badgeFontSize = 68;
-        badgePaddingY = 24;
+        badgePaddingY = 0;
         badgePaddingX = 38;
         badgeGap = 22;
       }
@@ -6970,7 +6987,7 @@ export async function GET(
           paddingX: badgePaddingX,
           paddingY: badgePaddingY,
           gap: badgeGap,
-        })
+        }, false, verticalBadgeContent)
         : 0;
       const qualityBadges = useLogoBadgeLayout ? [] : streamBadges;
       const badgesForIcons = cappedRatingBadges;
@@ -6978,20 +6995,30 @@ export async function GET(
       const finalOutputWidth = useLogoBadgeLayout && logoBadgeRowWidth > 0
         ? Math.max(logoNaturalWidth, logoBadgeRowWidth + 72)
         : outputWidth;
+      const logoScale =
+        useLogoBadgeLayout && logoNaturalWidth > 0
+          ? Math.max(1, finalOutputWidth / logoNaturalWidth)
+          : 1;
       const logoImageWidth = useLogoBadgeLayout
-        ? logoNaturalWidth
+        ? Math.max(logoNaturalWidth, Math.round(logoNaturalWidth * logoScale))
         : 0;
       const logoImageHeight = useLogoBadgeLayout
-        ? outputHeight
+        ? Math.max(outputHeight, Math.round(outputHeight * logoScale))
         : 0;
       const logoBadgesPerRow = useLogoBadgeLayout ? Math.max(1, cappedRatingBadges.length) : 0;
       const logoBadgeRows = useLogoBadgeLayout && cappedRatingBadges.length > 0 ? 1 : 0;
-      const logoBadgeItemHeight = badgeIconSize + badgePaddingY * 2;
+      const logoBadgeItemHeight = estimateBadgeHeight(
+        badgeFontSize,
+        badgePaddingX,
+        badgePaddingY,
+        badgeIconSize,
+        verticalBadgeContent
+      );
       const estimatedLogoWidth = logoImageWidth;
       const logoBadgeContainerMaxWidth = Math.max(0, finalOutputWidth - 24);
       const logoBadgeMaxWidth = logoBadgeContainerMaxWidth;
       const logoBadgeBandHeight = useLogoBadgeLayout && cappedRatingBadges.length > 0
-        ? Math.max(170, logoBadgeRows * logoBadgeItemHeight + Math.max(0, logoBadgeRows - 1) * badgeGap + 68)
+        ? logoBadgeRows * logoBadgeItemHeight + Math.max(0, logoBadgeRows - 1) * badgeGap
         : 0;
       const finalOutputHeight = useLogoBadgeLayout ? logoImageHeight + logoBadgeBandHeight : outputHeight;
       const renderedRatingCacheTtlCandidates = [

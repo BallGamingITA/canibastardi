@@ -834,7 +834,7 @@ export function HomePageView({ refs, state, derived, actions }: HomePageViewProp
                       <div className={`relative shadow-2xl shadow-black ring-1 ring-white/10 rounded-2xl overflow-hidden ${previewType === 'poster'
                         ? 'aspect-[2/3] w-60'
                           : previewType === 'logo'
-                            ? 'h-40 w-full max-w-lg'
+                            ? 'w-full max-w-lg'
                           : 'aspect-video w-full max-w-lg'
                         }`}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -842,7 +842,11 @@ export function HomePageView({ refs, state, derived, actions }: HomePageViewProp
                           key={previewUrl}
                           src={previewUrl}
                           alt="Preview"
-                          className={`h-full w-full ${previewType === 'logo' ? 'object-contain' : 'object-cover'}`}
+                          className={
+                            previewType === 'logo'
+                              ? 'block w-full h-auto'
+                              : 'h-full w-full object-cover'
+                          }
                         />
                       </div>
                     </div>
