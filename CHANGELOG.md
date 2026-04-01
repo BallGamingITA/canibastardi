@@ -2,6 +2,10 @@
 
 All notable changes to this project are documented in this file.
 
+## [0.2.4](https://github.com/realbestia1/erdb/compare/v0.2.3...v0.2.4) - 2026-04-01
+
+- preserve better readability on very wide logos ([c6603cf](https://github.com/realbestia1/erdb/commit/c6603cfd3e9edf15f485b0e29501c0431dfc353c))
+
 ## [0.2.3](https://github.com/realbestia1/erdb/compare/v0.2.2...v0.2.3) - 2026-04-01
 
 - bump to v0.2.3, keep logo ratings on one row, and restore standalone CSS in local start txt ([46e8890](https://github.com/realbestia1/erdb/commit/46e8890ae511090dc5012b4488e57a52214fb818))
