@@ -712,7 +712,7 @@ export default function HomePage({ mode = 'landing' }: { mode?: HomePageMode }) 
   const [showProxyUrl, setShowProxyUrl] = useState(false);
   const [aiometadataCopiedType, setAiometadataCopiedType] = useState<AiometadataPatternType | null>(null);
   const [aiometadataEpisodeProvider, setAiometadataEpisodeProvider] = useState<AiometadataEpisodeProvider>('realimdb');
-  const [currentVersion, setCurrentVersion] = useState('0.2.10');
+  const [currentVersion, setCurrentVersion] = useState('0.2.11');
   const [githubPackageVersion, setGithubPackageVersion] = useState<string | null>(null);
   const [repoUrl, setRepoUrl] = useState<string | null>(null);
   const [exportStatus, setExportStatus] = useState<'idle' | 'with' | 'without'>('idle');
@@ -1040,9 +1040,11 @@ export default function HomePage({ mode = 'landing' }: { mode?: HomePageMode }) 
     const ratingStyleForType =
       previewType === 'poster'
         ? posterRatingStyle
-        : previewType === 'backdrop' || previewType === 'thumbnail'
+        : previewType === 'backdrop'
           ? backdropRatingStyle
-          : logoRatingStyle;
+          : previewType === 'thumbnail'
+            ? thumbnailRatingStyle
+            : logoRatingStyle;
     const imageTextForType =
       previewType === 'backdrop' || previewType === 'thumbnail' ? backdropImageText : posterImageText;
     const streamBadgesForType =
@@ -1182,6 +1184,7 @@ export default function HomePage({ mode = 'landing' }: { mode?: HomePageMode }) 
     posterRatingStyle,
     backdropRatingStyle,
     logoRatingStyle,
+    thumbnailRatingStyle,
     baseUrl,
     mdblistKey,
     simklClientId,
@@ -1422,6 +1425,7 @@ export default function HomePage({ mode = 'landing' }: { mode?: HomePageMode }) 
 
     config.posterRatingStyle = posterRatingStyle;
     config.backdropRatingStyle = backdropRatingStyle;
+    config.thumbnailRatingStyle = thumbnailRatingStyle;
     config.logoRatingStyle = logoRatingStyle;
     config.logoMode = logoMode;
     config.logoFontVariant = logoFontVariant;
